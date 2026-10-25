@@ -22,6 +22,8 @@ COMMANDS = {
     "exit": "quit",
     "stop": "quit",
     "board": "board",
+    "next": "next",
+    "nextline": "next",
     "help": "help",
     "?": "help",
 }
@@ -49,7 +51,8 @@ Move notation (type it, or say it):
   Promotion e8=Q or e8Q ("e8 queen")
   Check +, mate #  (optional; you can leave them off)
   Also fine: from-to squares like g1f3, and any upper/lower case.
-Commands: hint (shows which piece, counts as 'hard') · skip · board · quit · ? (this help)"""
+  Board window: click a piece, then its square.
+Commands: hint (shows which piece, counts as 'hard') · skip · next (next line) · board · quit · ? (this help)"""
 
 
 class MoveSource(Protocol):

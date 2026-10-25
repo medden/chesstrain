@@ -21,6 +21,7 @@ class Outcome(Enum):
     HARD = "hard"
     AGAIN = "again"
     SKIP = "skip"
+    NEXT = "next"  # abandon this line (drill) / position (review)
     QUIT = "quit"
 
 
@@ -113,6 +114,8 @@ def quiz(
         cmd = command_of(text)
         if cmd == "quit":
             return Outcome.QUIT, None
+        if cmd == "next":
+            return Outcome.NEXT, None
         if cmd == "skip":
             display.say(f"Skipped. The move was {_san(board, main)}.")
             return Outcome.SKIP, main
@@ -245,6 +248,9 @@ class Trainer:
                     outcome, move = self._ask(board, label)
                     if outcome == Outcome.QUIT:
                         return False
+                    if outcome == Outcome.NEXT:
+                        self.display.say("— on to the next line —")
+                        return True
                     move = move or moves[0]
                 else:
                     move = moves[0]
@@ -300,7 +306,7 @@ def review(
             if outcome == Outcome.QUIT:
                 quit_ = True
                 break
-            if outcome == Outcome.SKIP:
+            if outcome in (Outcome.SKIP, Outcome.NEXT):
                 skipped.add((card.system, card.key))
     soon = [c for c in progress.due(system, now_utc() + timedelta(minutes=15)) if reviewable(c) is not None]
     display.say("")

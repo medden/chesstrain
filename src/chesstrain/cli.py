@@ -39,6 +39,15 @@ def _context(args) -> tuple[Config, dict, Progress, Display]:
     return cfg, reps, progress, display
 
 
+def _source(display: Display):
+    """Terminal input, plus board clicks/buttons when the window is open."""
+    if display.window is not None:
+        from .window import WindowMoveSource
+
+        return WindowMoveSource(display.window)
+    return CliMoveSource()
+
+
 def _system(reps, name: str):
     rep = resolve_system(reps, name)
     if rep is None:
@@ -61,7 +70,7 @@ def cmd_systems(args) -> None:
 def cmd_drill(args) -> None:
     cfg, reps, progress, display = _context(args)
     new = args.new or cfg.new_per_day
-    source = CliMoveSource()
+    source = _source(display)
     if args.system.lower() in ("all", "random", "mix"):
         trainers = [Trainer(r, progress, source, display, new_per_day=new) for r in reps.values()]
         tally = trainers[0].tally
@@ -86,7 +95,7 @@ def cmd_drill(args) -> None:
 def cmd_review(args) -> None:
     _cfg, reps, progress, display = _context(args)
     system = _system(reps, args.system).system.key if args.system else None
-    review(reps, progress, CliMoveSource(), display, system=system, limit=args.limit)
+    review(reps, progress, _source(display), display, system=system, limit=args.limit)
 
 
 def cmd_stats(args) -> None:
@@ -206,7 +215,7 @@ def cmd_guess(args) -> None:
     cfg, reps, progress, display = _context(args)
     alias = _player_alias(cfg, args.player)
     system = _system(reps, args.system).system.key if args.system else None
-    source = CliMoveSource()
+    source = _source(display)
     rng = random.Random()
     for _ in range(args.games):
         row = cr.pick_game(progress, alias, system, rng)

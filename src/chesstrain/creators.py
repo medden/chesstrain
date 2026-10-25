@@ -143,6 +143,9 @@ def guess_game(
             text = source.next_input(board, f"{alias} plays? (? for help) ")
             if command_of(text) == "quit":
                 return correct, total, True
+            if command_of(text) == "next":
+                display.say("— on to the next game —")
+                return correct, total, False
             if command_of(text) == "help":
                 display.say(notation_help(colour))
                 continue

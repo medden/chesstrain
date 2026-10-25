@@ -108,19 +108,22 @@ def coverage(rep: Repertoire, token: str, max_replies: int = 3, target: float = 
         total = sum(m["white"] + m["draws"] + m["black"] for m in moves)
         if total < min_games:
             continue
+        # Compare by SAN: the explorer writes castling king-takes-rook (e1h1), python-chess as e1g1.
         if node.turn != colour:
-            have = {m.uci() for m in node.moves}
+            if not node.path:
+                continue  # White's first move vs a Black defence chooses the system, not a gap
+            have = {board.san(m) for m in node.moves}
             cum = 0.0
-            for _i, m in enumerate(moves[:max_replies]):
+            for m in moves[:max_replies]:
                 share = (m["white"] + m["draws"] + m["black"]) / total
                 if cum >= target:
                     break
                 cum += share
-                if m["uci"] not in have:
+                if m["san"] not in have:
                     gaps.append((board.copy(), m["san"], share, total))
         else:
             for mine in node.moves:
-                row = next((m for m in moves if m["uci"] == mine.uci()), None)
+                row = next((m for m in moves if m["san"] == board.san(mine)), None)
                 share = (row["white"] + row["draws"] + row["black"]) / total if row else 0.0
                 if share < 0.03:
                     rare.append((board.copy(), board.san(mine), share, total))

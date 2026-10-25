@@ -3,13 +3,19 @@
 The CLI pushes each position here; the page polls and redraws. Vector pieces
 scale cleanly with the window. A fixed port lets an already-open window pick up
 the next session without opening another one.
+
+The page is also an input: click a piece then its destination, or press the
+command buttons. WindowMoveSource merges those with typed/dictated terminal
+input, so either answers the same question.
 """
 
 from __future__ import annotations
 
 import json
+import queue
 import shutil
 import subprocess
+import sys
 import threading
 import time
 import webbrowser
@@ -28,6 +34,8 @@ COLORS = {
     "coord": "#d8d8d8",
 }
 
+BUTTONS = [("hint", "Hint"), ("skip", "Skip"), ("next", "Next line"), ("help", "Help"), ("quit", "Quit")]
+
 PAGE = """<!doctype html>
 <html><head><meta charset="utf-8"><title>chesstrain</title>
 <style>
@@ -37,25 +45,78 @@ PAGE = """<!doctype html>
   #caption { padding: 8px 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #board { flex: 1; min-height: 0; display: flex; justify-content: center; }
   #board svg { height: 100%; width: auto; max-width: 100%; }
-  #log { padding: 6px 12px 10px; min-height: 4.2em; white-space: pre-wrap; color: #bbb; }
+  #board svg use { pointer-events: none; }
+  .waiting #board rect.square { cursor: pointer; }
+  #board rect.square.sel { fill: #7fa650; }
+  #board rect.square.dest { fill: #a9c97f; }
+  #bar { display: flex; gap: 8px; padding: 8px 12px 0; align-items: center; flex-wrap: wrap; }
+  #prompt { margin-right: auto; color: #e6d77a; }
+  button { font: inherit; background: #333; color: #ddd; border: 1px solid #555; border-radius: 6px;
+           padding: 4px 12px; cursor: pointer; }
+  button:hover:enabled { background: #444; }
+  button:disabled { opacity: .4; cursor: default; }
+  #log { padding: 6px 12px 10px; min-height: 4.2em; max-height: 38vh; overflow: auto;
+         white-space: pre-wrap; color: #bbb; }
   .off { opacity: .35; }
 </style></head>
 <body>
   <div id="caption">waiting for chesstrain…</div>
   <div id="board"></div>
+  <div id="bar"><span id="prompt"></span>__BUTTONS__</div>
   <div id="log"></div>
 <script>
-let v = -1;
+let v = -1, state = null, selected = null;
+
+function send(text) {
+  if (!state || !state.awaiting) return;
+  state.awaiting = false;
+  document.body.classList.remove('waiting');
+  fetch('/input', {method: 'POST', headers: {'Content-Type': 'application/json'},
+                   body: JSON.stringify({text})});
+}
+
+function mark() {
+  document.querySelectorAll('#board rect.square').forEach(r => {
+    const sq = [...r.classList].find(c => /^[a-h][1-8]$/.test(c));
+    r.classList.toggle('sel', sq === selected);
+    const dests = selected && state.legal[selected] ? state.legal[selected].map(u => u.slice(2, 4)) : [];
+    r.classList.toggle('dest', dests.includes(sq));
+  });
+}
+
+document.getElementById('board').addEventListener('click', e => {
+  const r = e.target.closest('rect.square');
+  if (!r || !state || !state.awaiting) return;
+  const sq = [...r.classList].find(c => /^[a-h][1-8]$/.test(c));
+  if (selected && state.legal[selected]) {
+    // Promotions arrive as e7e8q/e7e8r/...; the queen is listed first.
+    const move = state.legal[selected].find(u => u.slice(2, 4) === sq);
+    if (move) { selected = null; mark(); send(move); return; }
+  }
+  selected = state.legal[sq] ? sq : null;
+  mark();
+});
+
+document.querySelectorAll('#bar button').forEach(b =>
+  b.addEventListener('click', () => send(b.dataset.cmd)));
+
 async function poll() {
   try {
     const r = await fetch('/state?v=' + v, {cache: 'no-store'});
     const s = await r.json();
     document.body.classList.remove('off');
     if (s.v !== v) {
-      v = s.v;
+      v = s.v; state = s;
       document.getElementById('board').innerHTML = s.svg;
       document.getElementById('caption').textContent = s.caption;
-      document.getElementById('log').textContent = s.log.join('\\n');
+      document.getElementById('prompt').textContent = s.awaiting ? s.prompt : '';
+      const log = document.getElementById('log');
+      log.textContent = s.log.join('\\n');
+      log.scrollTop = log.scrollHeight;
+      document.body.classList.toggle('waiting', s.awaiting);
+      document.querySelectorAll('#bar button').forEach(b => b.disabled = !s.awaiting);
+      if (!s.awaiting || (selected && !s.legal[selected])) selected = null;
+      mark();
     }
   } catch (e) {
     document.body.classList.add('off');
@@ -65,7 +126,16 @@ async function poll() {
 }
 poll();
 </script></body></html>
-"""
+""".replace("__BUTTONS__", "".join(f'<button data-cmd="{c}" disabled>{label}</button>' for c, label in BUTTONS))
+
+
+def _legal(board: chess.Board) -> dict[str, list[str]]:
+    """from-square -> UCI moves, queen promotion first."""
+    out: dict[str, list[str]] = {}
+    order = {chess.QUEEN: 0, chess.KNIGHT: 1, chess.ROOK: 2, chess.BISHOP: 3, None: 0}
+    for move in sorted(board.legal_moves, key=lambda m: order[m.promotion]):
+        out.setdefault(chess.square_name(move.from_square), []).append(move.uci())
+    return out
 
 
 class BoardWindow:
@@ -74,7 +144,11 @@ class BoardWindow:
         self.version = 0
         self.svg = chess.svg.board(chess.Board(), colors=COLORS)
         self.caption = ""
-        self.log: deque[str] = deque(maxlen=4)
+        self.log: deque[str] = deque(maxlen=6)
+        self.awaiting = False
+        self.prompt = ""
+        self.legal: dict[str, list[str]] = {}
+        self.inbox: queue.Queue[tuple[str, str]] = queue.Queue()
         self.last_poll = 0.0
         self.lock = threading.Lock()
         self.server: ThreadingHTTPServer | None = None
@@ -98,12 +172,39 @@ class BoardWindow:
             self.log.append(text)
             self.version += 1
 
+    def await_input(self, board: chess.Board, prompt: str) -> None:
+        with self.lock:
+            self.awaiting, self.prompt, self.legal = True, prompt.strip(), _legal(board)
+            self.version += 1
+
+    def input_done(self) -> None:
+        with self.lock:
+            self.awaiting, self.legal = False, {}
+            self.version += 1
+
     def _state(self) -> bytes:
         with self.lock:
             self.last_poll = time.monotonic()
             return json.dumps(
-                {"v": self.version, "svg": self.svg, "caption": self.caption, "log": list(self.log)}
+                {
+                    "v": self.version,
+                    "svg": self.svg,
+                    "caption": self.caption,
+                    "log": list(self.log),
+                    "awaiting": self.awaiting,
+                    "prompt": self.prompt,
+                    "legal": self.legal,
+                }
             ).encode()
+
+    def _receive(self, text: str) -> bool:
+        with self.lock:
+            if not self.awaiting:
+                return False
+            self.awaiting = False
+            self.version += 1
+        self.inbox.put(("window", text))
+        return True
 
     # -- server ---------------------------------------------------------------
 
@@ -111,20 +212,37 @@ class BoardWindow:
         window = self
 
         class Handler(BaseHTTPRequestHandler):
-            def do_GET(self):
-                if self.path.startswith("/state"):
-                    body, ctype = window._state(), "application/json"
-                elif self.path in ("/", "/index.html"):
-                    body, ctype = PAGE.encode(), "text/html; charset=utf-8"
-                else:
-                    self.send_error(404)
-                    return
+            def _send(self, body: bytes, ctype: str) -> None:
                 self.send_response(200)
                 self.send_header("Content-Type", ctype)
                 self.send_header("Cache-Control", "no-store")
                 self.send_header("Content-Length", str(len(body)))
                 self.end_headers()
                 self.wfile.write(body)
+
+            def do_GET(self):
+                if self.path.startswith("/state"):
+                    self._send(window._state(), "application/json")
+                elif self.path in ("/", "/index.html"):
+                    self._send(PAGE.encode(), "text/html; charset=utf-8")
+                else:
+                    self.send_error(404)
+
+            def do_POST(self):
+                # Only our own page may answer (blocks other sites posting to localhost).
+                origin = self.headers.get("Origin")
+                host = self.headers.get("Host", "")
+                if self.path != "/input" or (origin and origin != f"http://{host}"):
+                    self.send_error(403)
+                    return
+                length = int(self.headers.get("Content-Length") or 0)
+                try:
+                    text = str(json.loads(self.rfile.read(length)).get("text", ""))[:40]
+                except (ValueError, AttributeError):
+                    self.send_error(400)
+                    return
+                accepted = window._receive(text)
+                self._send(json.dumps({"accepted": accepted}).encode(), "application/json")
 
             def log_message(self, *args):
                 pass
@@ -148,6 +266,37 @@ class BoardWindow:
     def stop(self) -> None:
         if self.server:
             self.server.shutdown()
+
+
+class WindowMoveSource:
+    """MoveSource that takes whichever arrives first: a terminal line or a window click/button."""
+
+    def __init__(self, window: BoardWindow, stdin=None):
+        self.window = window
+        stdin = stdin if stdin is not None else sys.stdin
+        threading.Thread(target=self._read, args=(stdin,), daemon=True).start()
+
+    def _read(self, stdin) -> None:
+        for line in stdin:
+            self.window.inbox.put(("terminal", line.strip()))
+        self.window.inbox.put(("terminal", "quit"))  # EOF
+
+    def next_input(self, board: chess.Board, prompt: str) -> str:
+        self.window.await_input(board, prompt)
+        print(prompt, end="", flush=True)
+        try:
+            source, text = self.window.inbox.get()
+        except KeyboardInterrupt:
+            print()
+            source, text = "terminal", "quit"
+        self.window.input_done()
+        if source == "window":
+            try:
+                shown = board.san(chess.Move.from_uci(text))
+            except (ValueError, AssertionError):
+                shown = text  # a button command
+            print(f"{shown}   (from board)")
+        return text
 
 
 def launch(url: str) -> None:
