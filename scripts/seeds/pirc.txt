@@ -1,0 +1,45 @@
+# Pirc Defence (Black) — solid, plan-based baseline.
+# Core setup: ...d6, ...Nf6, ...g6, ...Bg7, ...O-O, then ...c5/...c6/...e5 depending on White.
+
+# Austrian Attack (4.f4)
+1.e4 d6 2.d4 Nf6 3.Nc3 g6 4.f4 Bg7 5.Nf3 O-O 6.Bd3 Na6 7.O-O c5 8.d5 Nc7 9.a4 b6
+1.e4 d6 2.d4 Nf6 3.Nc3 g6 4.f4 Bg7 5.Nf3 O-O 6.Be2 c5 7.dxc5 Qa5 8.O-O Qxc5+ 9.Kh1 Nc6
+1.e4 d6 2.d4 Nf6 3.Nc3 g6 4.f4 Bg7 5.Nf3 O-O 6.e5 Nfd7 7.Bc4 Nb6 8.Bb3 Nc6 9.Be3 a5
+
+# Classical (4.Nf3)
+1.e4 d6 2.d4 Nf6 3.Nc3 g6 4.Nf3 Bg7 5.Be2 O-O 6.O-O c6 7.a4 a5 8.h3 Na6 9.Be3 Nb4
+1.e4 d6 2.d4 Nf6 3.Nc3 g6 4.Nf3 Bg7 5.Be2 O-O 6.O-O c6 7.h3 Nbd7 8.a4 e5 9.dxe5 dxe5
+1.e4 d6 2.d4 Nf6 3.Nc3 g6 4.Nf3 Bg7 5.h3 O-O 6.Be3 a6 7.a4 b6
+1.e4 d6 2.d4 Nf6 3.Nc3 g6 4.Nf3 Bg7 5.Bc4 O-O 6.O-O Nxe4 7.Nxe4 d5 8.Bd3 dxe4 9.Bxe4 Nd7
+1.e4 d6 2.d4 Nf6 3.Nc3 g6 4.Nf3 Bg7 5.Be3 O-O 6.Qd2 c6
+
+# 150 Attack / Be3 + Qd2
+1.e4 d6 2.d4 Nf6 3.Nc3 g6 4.Be3 Bg7 5.Qd2 c6 6.f3 b5 7.Nge2 Nbd7 8.Bh6 Bxh6 9.Qxh6 Bb7
+1.e4 d6 2.d4 Nf6 3.Nc3 g6 4.Be3 Bg7 5.Qd2 c6 6.Bh6 Bxh6 7.Qxh6 Qa5 8.Bd3 c5
+1.e4 d6 2.d4 Nf6 3.Nc3 g6 4.Be3 Bg7 5.Qd2 c6 6.Nf3 b5 7.Bd3 Nbd7 8.Bh6 Bxh6 9.Qxh6 Bb7
+1.e4 d6 2.d4 Nf6 3.Nc3 g6 4.Be3 Bg7 5.f3 c6 6.Qd2 b5
+1.e4 d6 2.d4 Nf6 3.Nc3 g6 4.f3 Bg7 5.Be3 c6 6.Qd2 b5
+
+# Other 4th moves
+1.e4 d6 2.d4 Nf6 3.Nc3 g6 4.Bg5 Bg7 5.Qd2 h6 6.Bh4 g5 7.Bg3 Nh5
+1.e4 d6 2.d4 Nf6 3.Nc3 g6 4.Bc4 Bg7 5.Qe2 c6 6.e5 dxe5 7.dxe5 Nd5 8.Bd2 O-O
+1.e4 d6 2.d4 Nf6 3.Nc3 g6 4.Bc4 Bg7 5.Nf3 O-O 6.O-O Nxe4 7.Nxe4 d5
+1.e4 d6 2.d4 Nf6 3.Nc3 g6 4.g3 Bg7 5.Bg2 O-O 6.Nge2 e5 7.h3 Nbd7
+1.e4 d6 2.d4 Nf6 3.Nc3 g6 4.Be2 Bg7 5.Nf3 O-O 6.O-O c6
+1.e4 d6 2.d4 Nf6 3.Nc3 g6 4.Be2 Bg7 5.h4 c5 6.dxc5 Qa5
+
+# White avoids 3.Nc3
+1.e4 d6 2.d4 Nf6 3.Bd3 e5 4.c3 d5 5.dxe5 Nxe4 6.Bxe4 dxe4 7.Qxd8+ Kxd8
+1.e4 d6 2.d4 Nf6 3.Nd2 g6 4.Ngf3 Bg7 5.Bd3 O-O 6.O-O c5 7.c3 cxd4 8.cxd4 Nc6
+1.e4 d6 2.d4 Nf6 3.f3 g6 4.c4 Bg7 5.Nc3 O-O
+1.e4 d6 2.d4 Nf6 3.e5 dxe5 4.dxe5 Qxd1+ 5.Kxd1 Ng4
+
+# Second-move alternatives
+1.e4 d6 2.Nc3 Nf6 3.d4 g6
+1.e4 d6 2.Nc3 Nf6 3.f4 g6 4.Nf3 Bg7
+1.e4 d6 2.Nc3 Nf6 3.Nf3 g6 4.d4 Bg7
+1.e4 d6 2.Nf3 Nf6 3.Nc3 g6 4.d4 Bg7
+1.e4 d6 2.Nf3 Nf6 3.Nc3 g6 4.Bc4 Bg7 5.O-O O-O 6.d3 c6
+1.e4 d6 2.Bc4 Nf6 3.d3 g6 4.Nf3 Bg7 5.O-O O-O 6.c3 Nc6
+1.e4 d6 2.f4 Nf6 3.Nc3 g6 4.Nf3 Bg7 5.d4 O-O
+1.e4 d6 2.f4 Nf6 3.Nc3 g6 4.Nf3 Bg7 5.Bc4 O-O 6.d3 c6

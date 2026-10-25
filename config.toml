@@ -1,0 +1,30 @@
+# chesstrain configuration. Secrets (Lichess token) go in config.local.toml, which is git-ignored.
+
+[me]
+chesscom = "sirogers"
+lichess = "londonlad"
+
+[training]
+new_per_day = 10        # new positions per system per day (drill mode)
+skip_bullet = true      # ignore bullet games when importing/fetching
+
+[display]
+pieces = "icons"        # "icons" (solid Nerd Font chess icons) or "ascii" (letters)
+small = true            # compact squares; zoom the terminal to size it. false = big 7x3 squares
+window = true           # show the board in a separate window (vector pieces); --no-window to skip
+# window_port = 8765
+
+[fetch]
+my_months = 1           # default months of your own games for `chesstrain fetch`
+player_months = 3       # default months for `chesstrain fetch --player`
+
+# Creators you watch. Use with `chesstrain fetch --player <alias>`.
+[[players]]
+alias = "banzea"
+site = "chesscom"
+username = "Alex_Banzea"   # note: "alexbanzea" (no underscore) is a different account
+
+[[players]]
+alias = "akeem"
+site = "lichess"
+username = "knightking64"  # ChessWithAkeem

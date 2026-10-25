@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.egg-info/
+data/
+config.local.toml
+games/inbox/*
+games/done/*
+games/creators/*
+!games/**/.gitkeep
+scripts/.explorer-cache/
