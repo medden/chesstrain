@@ -4,9 +4,9 @@ The CLI pushes each position here; the page polls and redraws. Vector pieces
 scale cleanly with the window. A fixed port lets an already-open window pick up
 the next session without opening another one.
 
-The page is also an input: click a piece then its destination, or press the
-command buttons. WindowMoveSource merges those with typed/dictated terminal
-input, so either answers the same question.
+The page is also an input: click a piece then its destination, type (or dictate) into
+the text box, or press the command buttons. WindowMoveSource merges those with
+terminal input, so either answers the same question.
 """
 
 from __future__ import annotations
@@ -43,34 +43,46 @@ PAGE = """<!doctype html>
                font: 15px/1.4 "JetBrainsMono Nerd Font", monospace; }
   body { display: flex; flex-direction: column; }
   #caption { padding: 8px 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  #board { flex: 1; min-height: 0; display: flex; justify-content: center; }
-  #board svg { height: 100%; width: auto; max-width: 100%; }
+  #board { flex: 1; min-height: 0; display: flex; justify-content: center; padding: 6px; }
+  #board svg { height: 100%; width: auto; max-width: 100%; border-radius: 4px;
+               outline: 5px solid transparent; transition: outline-color .8s; }
+  #board.good svg { outline-color: #5cb85c; transition: none; }
+  #board.bad svg { outline-color: #d9534f; transition: none; }
   #board svg use { pointer-events: none; }
   .waiting #board rect.square { cursor: pointer; }
   #board rect.square.sel { fill: #7fa650; }
   #board rect.square.dest { fill: #a9c97f; }
-  #bar { display: flex; gap: 8px; padding: 8px 12px 0; align-items: center; flex-wrap: wrap; }
-  #prompt { margin-right: auto; color: #e6d77a; }
+  #bar { display: flex; gap: 8px; padding: 8px 12px 0; flex-wrap: wrap; }
+  #entry { display: flex; gap: 8px; padding: 8px 12px 0; align-items: center; }
+  #prompt { color: #e6d77a; white-space: nowrap; }
+  #text { flex: 1; min-width: 0; font: inherit; background: #111; color: #eee; border: 1px solid #555;
+          border-radius: 6px; padding: 4px 8px; }
+  #text:disabled { opacity: .4; }
   button { font: inherit; background: #333; color: #ddd; border: 1px solid #555; border-radius: 6px;
            padding: 4px 12px; cursor: pointer; }
   button:hover:enabled { background: #444; }
   button:disabled { opacity: .4; cursor: default; }
   #log { padding: 6px 12px 10px; min-height: 4.2em; max-height: 38vh; overflow: auto;
          white-space: pre-wrap; color: #bbb; }
+  #log .ok { color: #7fd17f; } #log .bad { color: #ef7d7a; }
   .off { opacity: .35; }
 </style></head>
 <body>
   <div id="caption">waiting for chesstrain…</div>
   <div id="board"></div>
-  <div id="bar"><span id="prompt"></span>__BUTTONS__</div>
+  <div id="bar">__BUTTONS__</div>
+  <div id="entry"><span id="prompt"></span>
+    <input id="text" autocomplete="off" spellcheck="false" placeholder="type or say a move" disabled></div>
   <div id="log"></div>
 <script>
-let v = -1, state = null, selected = null;
+let v = -1, state = null, selected = null, seenVerdict = null, flashTimer = null;
+const text = document.getElementById('text');
 
 function send(text) {
   if (!state || !state.awaiting) return;
   state.awaiting = false;
   document.body.classList.remove('waiting');
+  text.disabled = true;
   fetch('/input', {method: 'POST', headers: {'Content-Type': 'application/json'},
                    body: JSON.stringify({text})});
 }
@@ -95,7 +107,20 @@ document.getElementById('board').addEventListener('click', e => {
   }
   selected = state.legal[sq] ? sq : null;
   mark();
+  text.focus();
 });
+
+text.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && text.value.trim()) { send(text.value.trim()); text.value = ''; }
+});
+
+function flash(ok) {
+  const b = document.getElementById('board');
+  clearTimeout(flashTimer);
+  b.classList.remove('good', 'bad');
+  b.classList.add(ok ? 'good' : 'bad');
+  flashTimer = setTimeout(() => b.classList.remove('good', 'bad'), 1500);
+}
 
 document.querySelectorAll('#bar button').forEach(b =>
   b.addEventListener('click', () => send(b.dataset.cmd)));
@@ -111,8 +136,19 @@ async function poll() {
       document.getElementById('caption').textContent = s.caption;
       document.getElementById('prompt').textContent = s.awaiting ? s.prompt : '';
       const log = document.getElementById('log');
-      log.textContent = s.log.join('\\n');
+      log.replaceChildren(...s.log.map(line => {
+        const d = document.createElement('div');
+        d.textContent = line;
+        if (line.startsWith('✓')) d.className = 'ok';
+        if (line.startsWith('✗')) d.className = 'bad';
+        return d;
+      }));
       log.scrollTop = log.scrollHeight;
+      // Flash only for answers given while this page was open, not on (re)load.
+      if (seenVerdict !== null && s.verdict.id !== seenVerdict) flash(s.verdict.ok);
+      seenVerdict = s.verdict.id;
+      text.disabled = !s.awaiting;
+      if (s.awaiting) text.focus();
       document.body.classList.toggle('waiting', s.awaiting);
       document.querySelectorAll('#bar button').forEach(b => b.disabled = !s.awaiting);
       if (!s.awaiting || (selected && !s.legal[selected])) selected = null;
@@ -148,6 +184,7 @@ class BoardWindow:
         self.awaiting = False
         self.prompt = ""
         self.legal: dict[str, list[str]] = {}
+        self.verdict_id, self.verdict_ok = 0, False
         self.inbox: queue.Queue[tuple[str, str]] = queue.Queue()
         self.last_poll = 0.0
         self.lock = threading.Lock()
@@ -172,6 +209,11 @@ class BoardWindow:
             self.log.append(text)
             self.version += 1
 
+    def verdict(self, ok: bool) -> None:
+        with self.lock:
+            self.verdict_id, self.verdict_ok = self.verdict_id + 1, ok
+            self.version += 1
+
     def await_input(self, board: chess.Board, prompt: str) -> None:
         with self.lock:
             self.awaiting, self.prompt, self.legal = True, prompt.strip(), _legal(board)
@@ -194,6 +236,7 @@ class BoardWindow:
                     "awaiting": self.awaiting,
                     "prompt": self.prompt,
                     "legal": self.legal,
+                    "verdict": {"id": self.verdict_id, "ok": self.verdict_ok},
                 }
             ).encode()
 

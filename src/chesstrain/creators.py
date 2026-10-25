@@ -140,7 +140,7 @@ def guess_game(
         display.say(move_list(board))
         display.board(board, colour)
         while True:
-            text = source.next_input(board, f"{alias} plays? (? for help) ")
+            text = source.next_input(board, f"{alias} plays? ")
             if command_of(text) == "quit":
                 return correct, total, True
             if command_of(text) == "next":
@@ -161,9 +161,11 @@ def guess_game(
         book = rep.moves_at(board)
         if guess == move:
             correct += 1
+            display.verdict(True)
             display.say(f"✓ {actual}")
         else:
             shown = board.san(guess) if guess else "—"
+            display.verdict(False)
             display.say(f"✗ you said {shown}; {alias} played {actual}")
         if book and move not in book:
             display.say(f"  (your repertoire has {board.san(book[0])} here)")

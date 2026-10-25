@@ -74,3 +74,18 @@ def test_next_command_ends_drill_line():
     t = Trainer(make_rep(), Progress(":memory:"), ScriptedMoveSource(["next"]), Display(colour=False, out=[]))
     assert t.drill_line() is True
     assert t.tally.total == 0
+
+
+def test_answers_flash_the_board():
+    from chesstrain.moves import ScriptedMoveSource
+    from chesstrain.session import Outcome, quiz
+
+    w = BoardWindow(port=0)
+    d = Display(colour=False, out=[], window=w)
+    b = chess.Board()
+    e4 = chess.Move.from_uci("e2e4")
+    assert quiz(b, [e4], ScriptedMoveSource(["e4"]), d, chess.WHITE)[0] == Outcome.GOOD
+    assert (w.verdict_id, w.verdict_ok) == (1, True)
+    assert quiz(b, [e4], ScriptedMoveSource(["d4", "e4"]), d, chess.WHITE)[0] == Outcome.AGAIN
+    assert (w.verdict_id, w.verdict_ok) == (2, False)
+    assert json.loads(w._state())["verdict"] == {"id": 2, "ok": False}

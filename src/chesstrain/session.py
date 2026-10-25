@@ -48,6 +48,11 @@ class Display:
         if self.window is not None:
             self.window.say(text)
 
+    def verdict(self, ok: bool) -> None:
+        """Right/wrong signal; the window flashes its board border."""
+        if self.window is not None:
+            self.window.verdict(ok)
+
     def board(self, board: chess.Board, orientation: chess.Color, force_terminal: bool = False) -> None:
         if self.window is not None:
             self.window.show(board, orientation, caption=move_list(board))
@@ -110,7 +115,7 @@ def quiz(
     main = accepted[0]
     hinted = False
     while True:
-        text = source.next_input(board, "Your move (? for help): ")
+        text = source.next_input(board, "Your move: ")
         cmd = command_of(text)
         if cmd == "quit":
             return Outcome.QUIT, None
@@ -134,12 +139,14 @@ def quiz(
             display.say(f"Couldn't read '{text}' as a legal move here. Try again.")
             continue
         if move in accepted:
+            display.verdict(True)
             if move != main:
                 display.say(f"✓ {_san(board, move)} is in your repertoire (main line prefers {_san(board, main)}).")
             else:
                 display.say(f"✓ {_san(board, move)}" + (" (with hint)" if hinted else ""))
             return (Outcome.HARD if hinted else Outcome.GOOD), move
         others = ", ".join(_san(board, m) for m in accepted[1:])
+        display.verdict(False)
         display.say(
             f"✗ {_san(board, move)} isn't your repertoire move. Correct: {_san(board, main)}"
             + (f" (also: {others})" if others else "")
