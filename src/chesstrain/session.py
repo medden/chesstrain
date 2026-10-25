@@ -36,6 +36,7 @@ class Display:
     colour: bool | None = None
     out: list[str] | None = None  # capture output (tests); None prints
     window: object | None = None  # BoardWindow: shows the board graphically instead
+    blind: bool = False  # no board unless asked for ('board' command): visualisation practice
 
     def _emit(self, text: str) -> None:
         if self.out is None:
@@ -58,6 +59,8 @@ class Display:
             self.window.show(board, orientation, caption=move_list(board))
             if not force_terminal:
                 return
+        if self.blind and not force_terminal:
+            return
         self._emit(
             render(board, orientation, ascii=self.ascii, colour=self.colour, small=self.small, pieces=self.pieces)
         )
@@ -226,7 +229,7 @@ class Trainer:
         if outcome in RATING:
             row = self.progress.review(self.system, key, RATING[outcome], mode="train")
             days = (row.due - now_utc()).total_seconds() / 86400
-            when = f"{days:.0f} day(s)" if days >= 1 else f"{max(1, round(days * 1440))} min"
+            when = f"{days:.0f} day(s)" if days >= 0.95 else f"{max(1, round(days * 1440))} min"
             self.display.say(f"  next review in {when}")
         return outcome, move
 

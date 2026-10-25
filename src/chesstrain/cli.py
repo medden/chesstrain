@@ -28,8 +28,13 @@ def _context(args) -> tuple[Config, dict, Progress, Display]:
         ascii=getattr(args, "ascii", False),
         small=(cfg.small_board or getattr(args, "small", False)) and not getattr(args, "large", False),
         pieces=getattr(args, "pieces", None) or cfg.pieces,
+        blind=getattr(args, "blind", False),
     )
-    use_window = (cfg.window or getattr(args, "window", False)) and not getattr(args, "no_window", False)
+    if display.blind:
+        print("Blind mode: no board, just the moves. Type 'board' to peek.")
+    use_window = (
+        (cfg.window or getattr(args, "window", False)) and not getattr(args, "no_window", False) and not display.blind
+    )
     if use_window and hasattr(args, "window"):
         from .window import BoardWindow
 
@@ -268,6 +273,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--large", action="store_true", help="big squares (7x3) instead of compact")
     p.add_argument("--window", action="store_true", help="show the board in a separate window")
     p.add_argument("--no-window", action="store_true", help="terminal board even if config enables the window")
+    p.add_argument("--blind", action="store_true", help="no board at all: follow the moves in your head")
     p.set_defaults(func=cmd_drill)
 
     p = sub.add_parser("review", help="review due positions across systems")
@@ -277,6 +283,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--large", action="store_true", help="big squares (7x3) instead of compact")
     p.add_argument("--window", action="store_true", help="show the board in a separate window")
     p.add_argument("--no-window", action="store_true", help="terminal board even if config enables the window")
+    p.add_argument("--blind", action="store_true", help="no board at all: follow the moves in your head")
     p.set_defaults(func=cmd_review)
 
     p = sub.add_parser("stats", help="progress, accuracy, weak spots, gaps")
@@ -306,6 +313,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--large", action="store_true", help="big squares (7x3) instead of compact")
     p.add_argument("--window", action="store_true", help="show the board in a separate window")
     p.add_argument("--no-window", action="store_true", help="terminal board even if config enables the window")
+    p.add_argument("--blind", action="store_true", help="no board at all: follow the moves in your head")
     p.set_defaults(func=cmd_guess)
 
     p = sub.add_parser("adopt", help="copy a suggested line from `report` into your repertoire")

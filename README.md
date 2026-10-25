@@ -27,6 +27,11 @@ chesstrain stats                           # learned / due / accuracy / weak spo
 The board is compact by default (zoom the terminal to size it); `--large` gives big
 squares, `--ascii` uses letters. Defaults live under `[display]` in `config.toml`.
 
+With `window = true` the board opens in its own window: click a piece then its square,
+type or dictate into the box under it, or use the buttons; the border flashes green/red
+on each answer. `--blind` drops the board entirely and shows only the moves, so you
+follow the position in your head (`board` peeks). Works with `drill`, `review` and `guess`.
+
 While answering: type or say (Voxtype push-to-talk) `Nf3`, "knight to f3", `nf3`, `O-O`, `exd5` or `g1f3`; `hint` (shows which piece,
 counts as Hard), `skip`, `board`, `quit`. A wrong move shows the answer and you type it
 to lock it in; the position comes back soon.

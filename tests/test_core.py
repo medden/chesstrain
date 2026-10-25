@@ -262,3 +262,16 @@ def test_local_config_overrides(tmp_path):
     cfg = load_config(tmp_path)
     assert cfg.chesscom_user == "u1" and cfg.new_per_day == 5 and cfg.window is True
     assert [p.username for p in cfg.players] == ["X"]
+
+
+def test_blind_display_hides_board_until_asked():
+    from chesstrain.moves import ScriptedMoveSource
+    from chesstrain.session import Display, quiz
+
+    out: list[str] = []
+    d = Display(colour=False, out=out, blind=True)
+    b = chess.Board()
+    d.board(b, chess.WHITE)
+    assert out == []
+    quiz(b, [chess.Move.from_uci("e2e4")], ScriptedMoveSource(["board", "e4"]), d, chess.WHITE)
+    assert len(out) == 2 and "a" in out[0]  # the peek, then "✓ e4"
