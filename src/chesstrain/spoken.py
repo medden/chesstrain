@@ -12,32 +12,102 @@ import re
 import chess
 
 PIECES = {
-    "king": chess.KING, "kings": chess.KING,
-    "queen": chess.QUEEN, "queens": chess.QUEEN,
-    "rook": chess.ROOK, "rooks": chess.ROOK, "rock": chess.ROOK, "brook": chess.ROOK, "ruk": chess.ROOK,
-    "bishop": chess.BISHOP, "bishops": chess.BISHOP,
-    "knight": chess.KNIGHT, "knights": chess.KNIGHT, "night": chess.KNIGHT, "nights": chess.KNIGHT,
-    "nite": chess.KNIGHT, "horse": chess.KNIGHT,
-    "pawn": chess.PAWN, "pawns": chess.PAWN, "pond": chess.PAWN, "porn": chess.PAWN, "prawn": chess.PAWN,
+    "king": chess.KING,
+    "kings": chess.KING,
+    "queen": chess.QUEEN,
+    "queens": chess.QUEEN,
+    "rook": chess.ROOK,
+    "rooks": chess.ROOK,
+    "rock": chess.ROOK,
+    "brook": chess.ROOK,
+    "ruk": chess.ROOK,
+    "bishop": chess.BISHOP,
+    "bishops": chess.BISHOP,
+    "knight": chess.KNIGHT,
+    "knights": chess.KNIGHT,
+    "night": chess.KNIGHT,
+    "nights": chess.KNIGHT,
+    "nite": chess.KNIGHT,
+    "horse": chess.KNIGHT,
+    "pawn": chess.PAWN,
+    "pawns": chess.PAWN,
+    "pond": chess.PAWN,
+    "porn": chess.PAWN,
+    "prawn": chess.PAWN,
 }
 FILES = {
     **{f: f for f in "abcdefgh"},
-    "alpha": "a", "bravo": "b", "charlie": "c", "delta": "d", "echo": "e", "foxtrot": "f", "golf": "g", "hotel": "h",
-    "bee": "b", "be": "b", "see": "c", "sea": "c", "si": "c", "dee": "d", "eff": "f", "ef": "f",
-    "gee": "g", "ji": "g", "aitch": "h", "age": "h", "eh": "a", "ee": "e",
+    "alpha": "a",
+    "bravo": "b",
+    "charlie": "c",
+    "delta": "d",
+    "echo": "e",
+    "foxtrot": "f",
+    "golf": "g",
+    "hotel": "h",
+    "bee": "b",
+    "be": "b",
+    "see": "c",
+    "sea": "c",
+    "si": "c",
+    "dee": "d",
+    "eff": "f",
+    "ef": "f",
+    "gee": "g",
+    "ji": "g",
+    "aitch": "h",
+    "age": "h",
+    "eh": "a",
+    "ee": "e",
 }
 RANKS = {
     **{str(n): str(n) for n in range(1, 9)},
-    "one": "1", "won": "1", "two": "2", "too": "2", "to": "2", "three": "3", "tree": "3",
-    "four": "4", "for": "4", "fore": "4", "five": "5", "six": "6", "sicks": "6",
-    "seven": "7", "eight": "8", "ate": "8",
+    "one": "1",
+    "won": "1",
+    "two": "2",
+    "too": "2",
+    "to": "2",
+    "three": "3",
+    "tree": "3",
+    "four": "4",
+    "for": "4",
+    "fore": "4",
+    "five": "5",
+    "six": "6",
+    "sicks": "6",
+    "seven": "7",
+    "eight": "8",
+    "ate": "8",
 }
 CAPTURE = {"takes", "take", "x", "captures", "capture", "by", "cross"}
 PROMOTE = {"promotes", "promote", "promoting", "equals", "becomes"}
 KINGSIDE = {"kingside", "short"}
 QUEENSIDE = {"queenside", "long"}
-FILLER = {"to", "too", "the", "a", "on", "moves", "move", "goes", "go", "plays", "play", "and", "check",
-          "checkmate", "mate", "please", "um", "uh", "er", "okay", "ok", "side", "square"}
+FILLER = {
+    "to",
+    "too",
+    "the",
+    "a",
+    "on",
+    "moves",
+    "move",
+    "goes",
+    "go",
+    "plays",
+    "play",
+    "and",
+    "check",
+    "checkmate",
+    "mate",
+    "please",
+    "um",
+    "uh",
+    "er",
+    "okay",
+    "ok",
+    "side",
+    "square",
+}
 
 
 def tokens(text: str) -> list[str]:
@@ -139,4 +209,3 @@ def spoken_to_move(board: chess.Board, text: str) -> chess.Move | None:
         pawns = [m for m in candidates if board.piece_type_at(m.from_square) == chess.PAWN]
         candidates = pawns or candidates
     return candidates[0] if len(candidates) == 1 else None
-

@@ -88,7 +88,7 @@ class Repertoire:
                 key = position_key(child)
                 if key in self.nodes and key not in seen:
                     seen.add(key)
-                    queue.append((child, path + [move]))
+                    queue.append((child, [*path, move]))
 
     # -- queries ------------------------------------------------------------
 

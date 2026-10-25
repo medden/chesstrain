@@ -93,7 +93,8 @@ def process_game(
             progress.add_gap(s.system, s.key, s.played.uci(), played, gid)
         names = ", ".join(reps[s.system].system.name for s in shared)
         summary.notes.append(
-            f"  ? {_describe(game)}: after {move_list(m.board)} opponent played {played} — not prepared in {names} (gap)"
+            f"  ? {_describe(game)}: after {move_list(m.board)} opponent played {played} "
+            f"— not prepared in {names} (gap)"
         )
         return
 

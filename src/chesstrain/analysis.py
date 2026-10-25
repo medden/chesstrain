@@ -117,7 +117,9 @@ def shared_gap(reps: dict[str, Repertoire], game: chess.pgn.Game, colour: chess.
     return []
 
 
-def _distinctive(rep: Repertoire, others: list[Repertoire], game: chess.pgn.Game, colour: chess.Color, plies: int) -> bool:
+def _distinctive(
+    rep: Repertoire, others: list[Repertoire], game: chess.pgn.Game, colour: chess.Color, plies: int
+) -> bool:
     board = game.board()
     last_mine = None
     for i, move in enumerate(game.mainline_moves()):

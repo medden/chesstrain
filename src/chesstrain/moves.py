@@ -14,8 +14,17 @@ import chess
 
 from .spoken import spoken_to_move
 
-COMMANDS = {"hint": "hint", "skip": "skip", "quit": "quit", "q": "quit", "exit": "quit", "stop": "quit",
-            "board": "board", "help": "help", "?": "help"}
+COMMANDS = {
+    "hint": "hint",
+    "skip": "skip",
+    "quit": "quit",
+    "q": "quit",
+    "exit": "quit",
+    "stop": "quit",
+    "board": "board",
+    "help": "help",
+    "?": "help",
+}
 
 
 def command_of(text: str) -> str | None:

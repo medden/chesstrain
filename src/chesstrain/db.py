@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import fsrs
@@ -69,7 +69,7 @@ RATING_NAMES = {fsrs.Rating.Again: "again", fsrs.Rating.Hard: "hard", fsrs.Ratin
 
 
 def now_utc() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 @dataclass
@@ -133,15 +133,13 @@ class Progress:
 
     def new_today(self, system: str, at: datetime | None = None) -> int:
         at = (at or now_utc()).astimezone()
-        start = at.replace(hour=0, minute=0, second=0, microsecond=0).astimezone(timezone.utc)
+        start = at.replace(hour=0, minute=0, second=0, microsecond=0).astimezone(UTC)
         r = self.conn.execute(
             "SELECT COUNT(*) FROM cards WHERE system=? AND first_seen >= ?", (system, start.isoformat())
         ).fetchone()
         return r[0]
 
-    def review(
-        self, system: str, key: str, rating: fsrs.Rating, mode: str, at: datetime | None = None
-    ) -> CardRow:
+    def review(self, system: str, key: str, rating: fsrs.Rating, mode: str, at: datetime | None = None) -> CardRow:
         at = at or now_utc()
         existing = self.get(system, key)
         card = existing.card if existing else fsrs.Card()

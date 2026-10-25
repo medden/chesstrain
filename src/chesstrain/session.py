@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import random
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import timedelta
 from enum import Enum
 
@@ -52,7 +52,9 @@ class Display:
             self.window.show(board, orientation, caption=move_list(board))
             if not force_terminal:
                 return
-        self._emit(render(board, orientation, ascii=self.ascii, colour=self.colour, small=self.small, pieces=self.pieces))
+        self._emit(
+            render(board, orientation, ascii=self.ascii, colour=self.colour, small=self.small, pieces=self.pieces)
+        )
 
 
 @dataclass
@@ -223,7 +225,6 @@ class Trainer:
         rep = self.rep
         board = chess.Board()
         my_index = 0
-        auto: list[str] = []
         while True:
             moves = rep.moves_at(board)
             if not moves:

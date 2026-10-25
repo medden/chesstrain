@@ -39,7 +39,9 @@ def _game(pgn: str) -> chess.pgn.Game:
     return chess.pgn.read_game(io.StringIO(pgn))
 
 
-def divergences(reps: dict[str, Repertoire], progress: Progress, player: str, system: str | None = None) -> list[Divergence]:
+def divergences(
+    reps: dict[str, Repertoire], progress: Progress, player: str, system: str | None = None
+) -> list[Divergence]:
     """Where the creator, playing your system, chose a different move than your repertoire."""
     buckets: dict[tuple, Divergence] = {}
     for row in progress.games(player, system):
@@ -77,7 +79,8 @@ def report_lines(
             pct = 100 * d.score / d.count
             out.append(
                 f"  [{i}] after {move_list(b)}: {alias} plays {b.san(d.played)} "
-                f"({d.count} game{'s' if d.count != 1 else ''}, scored {pct:.0f}%) — your repertoire: {b.san(d.expected)}"
+                f"({d.count} game{'s' if d.count != 1 else ''}, scored {pct:.0f}%) "
+                f"— your repertoire: {b.san(d.expected)}"
             )
     out.append(f"\nAdopt one with: chesstrain adopt {alias} <number>")
     return out
@@ -108,7 +111,7 @@ def add_line_to_pgn(pgn_path: Path, moves: list[chess.Move], comment: str) -> No
                 branched = True
         else:
             node = existing
-    games = [game] + games[1:]
+    games = [game, *games[1:]]
     pgn_path.write_text("\n\n".join(str(g) for g in games) + "\n")
 
 

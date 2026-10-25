@@ -58,8 +58,10 @@ def build_game(system_name: str, seed_lines) -> chess.pgn.Game:
             try:
                 move = board.parse_san(san)
             except ValueError as e:
-                raise SystemExit(f"{system_name} seed line {lineno}: illegal move {san!r} after "
-                                 f"{chess.Board().variation_san(board.move_stack)}: {e}")
+                raise SystemExit(
+                    f"{system_name} seed line {lineno}: illegal move {san!r} after "
+                    f"{chess.Board().variation_san(board.move_stack)}: {e}"
+                ) from e
             existing = next((v for v in node.variations if v.move == move), None)
             node = existing or node.add_variation(move)
             board.push(move)
@@ -67,6 +69,7 @@ def build_game(system_name: str, seed_lines) -> chess.pgn.Game:
 
 
 # -- explorer ---------------------------------------------------------------
+
 
 def explorer(fen: str, token: str) -> dict:
     import httpx
@@ -76,7 +79,7 @@ def explorer(fen: str, token: str) -> dict:
     if cache.exists():
         return json.loads(cache.read_text())
     params = {"fen": fen, "speeds": "blitz,rapid,classical", "ratings": "1400,1600,1800,2000", "moves": 12}
-    for attempt in range(5):
+    for _attempt in range(5):
         r = httpx.get(EXPLORER, params=params, headers={"Authorization": f"Bearer {token}"}, timeout=30)
         if r.status_code == 429:
             time.sleep(60)
@@ -94,9 +97,11 @@ def coverage(rep: Repertoire, token: str, max_replies: int = 3, target: float = 
     and my moves that are rare at club level."""
     colour = rep.system.colour
     gaps, rare = [], []
-    for node in rep.nodes.values():
-        if not node.moves or (not node.path and node.key != position_key(chess.Board())):
-            continue
+    start = position_key(chess.Board())
+    nodes = [n for n in rep.nodes.values() if n.moves and (n.path or n.key == start)]
+    for done, node in enumerate(nodes, 1):
+        # Progress on stderr, flushed: the run takes minutes and stdout may be redirected.
+        print(f"\r   explorer {done}/{len(nodes)}", end="", file=sys.stderr, flush=True)
         board = rep.board_for(node.key)
         data = explorer(board.fen(), token)
         moves = data.get("moves", [])
@@ -106,7 +111,7 @@ def coverage(rep: Repertoire, token: str, max_replies: int = 3, target: float = 
         if node.turn != colour:
             have = {m.uci() for m in node.moves}
             cum = 0.0
-            for i, m in enumerate(moves[:max_replies]):
+            for _i, m in enumerate(moves[:max_replies]):
                 share = (m["white"] + m["draws"] + m["black"]) / total
                 if cum >= target:
                     break
@@ -119,6 +124,7 @@ def coverage(rep: Repertoire, token: str, max_replies: int = 3, target: float = 
                 share = (row["white"] + row["draws"] + row["black"]) / total if row else 0.0
                 if share < 0.03:
                     rare.append((board.copy(), board.san(mine), share, total))
+    print(file=sys.stderr)
     return gaps, rare
 
 
@@ -140,29 +146,36 @@ def main() -> None:
         out = folder / "repertoire.pgn"
         text = str(game) + "\n"
         marker = folder / ".built-hash"
-        if out.exists() and marker.exists() and not args.force:
-            if sha1(out.read_bytes()).hexdigest() != marker.read_text().strip():
-                print(f"! {out.relative_to(ROOT)} was edited by hand; skipping (use --force to overwrite)")
-                continue
+        hand_edited = (
+            out.exists() and marker.exists() and sha1(out.read_bytes()).hexdigest() != marker.read_text().strip()
+        )
+        if hand_edited and not args.force:
+            print(f"! {out.relative_to(ROOT)} was edited by hand; skipping (use --force to overwrite)")
+            continue
         out.write_text(text)
         marker.write_text(sha1(text.encode()).hexdigest())
         rep = Repertoire(system, [game])
         cards = rep.card_keys()
-        print(f"{system.name}: {len(cards)} positions to learn → {out.relative_to(ROOT)}")
+        print(f"{system.name}: {len(cards)} positions to learn → {out.relative_to(ROOT)}", flush=True)
         for key, moves in rep.alternatives():
             b = rep.board_for(key)
-            print(f"   note: alternatives at {chess.Board().variation_san(b.move_stack)}: "
-                  + ", ".join(b.san(m) for m in moves))
+            print(
+                f"   note: alternatives at {chess.Board().variation_san(b.move_stack)}: "
+                + ", ".join(b.san(m) for m in moves)
+            )
         if args.explorer:
             if not cfg.lichess_token:
                 raise SystemExit("--explorer needs LICHESS_TOKEN or [lichess] token in config.local.toml")
             gaps, rare = coverage(rep, cfg.lichess_token)
             for b, san, share, total in sorted(gaps, key=lambda g: -g[2] * g[3]):
-                print(f"   GAP  {chess.Board().variation_san(b.move_stack)} … {san} "
-                      f"({share:.0%} of {total} games) not covered")
+                print(
+                    f"   GAP  {chess.Board().variation_san(b.move_stack)} … {san} "
+                    f"({share:.0%} of {total} games) not covered"
+                )
             for b, san, share, total in rare:
-                print(f"   RARE {chess.Board().variation_san(b.move_stack)} … your {san} "
-                      f"is {share:.1%} of {total} games")
+                print(
+                    f"   RARE {chess.Board().variation_san(b.move_stack)} … your {san} is {share:.1%} of {total} games"
+                )
 
 
 if __name__ == "__main__":

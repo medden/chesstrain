@@ -7,7 +7,7 @@ import chess.pgn
 import fsrs
 import pytest
 
-from chesstrain.analysis import detect, is_bullet, walk
+from chesstrain.analysis import detect, is_bullet
 from chesstrain.config import load_config
 from chesstrain.db import Progress, now_utc
 from chesstrain.games import ImportSummary, import_text
@@ -35,6 +35,7 @@ def play(*sans):
 
 
 # -- repertoire ---------------------------------------------------------------
+
 
 def test_card_positions_and_transposition():
     rep = make_rep()
@@ -70,9 +71,17 @@ def test_shipped_repertoires_load():
 
 # -- move parsing ---------------------------------------------------------------
 
-@pytest.mark.parametrize("text,uci", [
-    ("Nf3", "g1f3"), ("nf3", "g1f3"), ("g1f3", "g1f3"), ("e4", "e2e4"), ("E4", "e2e4"),
-])
+
+@pytest.mark.parametrize(
+    "text,uci",
+    [
+        ("Nf3", "g1f3"),
+        ("nf3", "g1f3"),
+        ("g1f3", "g1f3"),
+        ("e4", "e2e4"),
+        ("E4", "e2e4"),
+    ],
+)
 def test_parse_move_start(text, uci):
     assert parse_move(chess.Board(), text) == chess.Move.from_uci(uci)
 
@@ -91,6 +100,7 @@ def test_parse_castling_and_pawn_vs_bishop():
 
 
 # -- quiz / FSRS ----------------------------------------------------------------
+
 
 def _quiet():
     return Display(colour=False, out=[])
@@ -118,6 +128,7 @@ def test_wrong_answer_schedules_soon_and_counts_lapse():
 
 
 # -- drill ----------------------------------------------------------------------
+
 
 def test_drill_from_and_every():
     rep = make_rep()
@@ -166,6 +177,7 @@ def test_review_shows_due_then_stops():
 
 # -- games ------------------------------------------------------------------------
 
+
 def _game(moves, white="me_user", black="opp", tc="600+0"):
     return f'[White "{white}"]\n[Black "{black}"]\n[TimeControl "{tc}"]\n[Result "*"]\n\n{moves} *\n\n'
 
@@ -180,7 +192,7 @@ def test_detect_and_deviation_by_me_requeues_card():
     card = p.cards("pirc")[0]
     assert card.lapses == 1
     assert [c.key for c in p.due("pirc")] == [card.key]
-    assert position_key(rep_board := reps["pirc"].board_for(card.key)) == position_key(play("e4", "d6", "d4", "Nf6", "Nc3"))
+    assert position_key(reps["pirc"].board_for(card.key)) == position_key(play("e4", "d6", "d4", "Nf6", "Nc3"))
 
 
 def test_gap_recorded_when_opponent_leaves_book():
@@ -200,7 +212,9 @@ def test_unmatched_and_bullet_skipped():
     reps = {"pirc": make_rep()}
     p = Progress(":memory:")
     s = ImportSummary()
-    text = _game("1. e4 c5 2. Nf3", white="opp", black="me_user") + _game("1. e4 d6", tc="60+0", white="opp", black="me_user")
+    text = _game("1. e4 c5 2. Nf3", white="opp", black="me_user") + _game(
+        "1. e4 d6", tc="60+0", white="opp", black="me_user"
+    )
     import_text(text, reps=reps, progress=p, player="me", names={"me_user"}, skip_bullet=True, summary=s)
     assert s.counts["unmatched"] == 1 and s.counts["bullet"] == 1
 
@@ -227,13 +241,20 @@ def test_shared_prefix_gap_recorded_for_each_system():
     colle = Repertoire(System("colle", "Colle", chess.WHITE, Path(".")), read_games("1. d4 d5 2. Nf3 Nf6 3. e3 *"))
     p = Progress(":memory:")
     s = ImportSummary()
-    import_text(_game("1. d4 e5 2. dxe5"), reps={"jobava": jobava, "colle": colle}, progress=p, player="me",
-                names={"me_user"}, skip_bullet=True, summary=s)
+    import_text(
+        _game("1. d4 e5 2. dxe5"),
+        reps={"jobava": jobava, "colle": colle},
+        progress=p,
+        player="me",
+        names={"me_user"},
+        skip_bullet=True,
+        summary=s,
+    )
     assert {g["system"] for g in p.gaps()} == {"jobava", "colle"}
 
 
 def test_local_config_overrides(tmp_path):
-    (tmp_path / "config.toml").write_text('[training]\nnew_per_day = 10\n[display]\nwindow = true\n')
+    (tmp_path / "config.toml").write_text("[training]\nnew_per_day = 10\n[display]\nwindow = true\n")
     (tmp_path / "config.local.toml").write_text(
         '[me]\nchesscom = "u1"\n[training]\nnew_per_day = 5\n'
         '[[players]]\nalias = "x"\nsite = "lichess"\nusername = "X"\n'

@@ -47,13 +47,15 @@ def _system(reps, name: str):
 
 
 def cmd_systems(args) -> None:
-    cfg, reps, progress, _ = _context(args)
+    _cfg, reps, progress, _ = _context(args)
     for key, rep in reps.items():
         cards = rep.card_keys()
         seen = {r.key for r in progress.cards(key)}
         due = len(progress.due(key))
-        print(f"{key:15} {rep.system.name:20} {rep.system.colour_name:5}  "
-              f"{len(cards):4} positions · {len(seen & set(cards)):4} seen · {due} due")
+        print(
+            f"{key:15} {rep.system.name:20} {rep.system.colour_name:5}  "
+            f"{len(cards):4} positions · {len(seen & set(cards)):4} seen · {due} due"
+        )
 
 
 def cmd_drill(args) -> None:
@@ -82,7 +84,7 @@ def cmd_drill(args) -> None:
 
 
 def cmd_review(args) -> None:
-    cfg, reps, progress, display = _context(args)
+    _cfg, reps, progress, display = _context(args)
     system = _system(reps, args.system).system.key if args.system else None
     review(reps, progress, CliMoveSource(), display, system=system, limit=args.limit)
 
@@ -115,8 +117,15 @@ def cmd_import(args) -> None:
         return
     summary = ImportSummary()
     for f in files:
-        import_text(f.read_text(errors="replace"), reps=reps, progress=progress, player="me",
-                    names=cfg.my_names(), skip_bullet=cfg.skip_bullet, summary=summary)
+        import_text(
+            f.read_text(errors="replace"),
+            reps=reps,
+            progress=progress,
+            player="me",
+            names=cfg.my_names(),
+            skip_bullet=cfg.skip_bullet,
+            summary=summary,
+        )
         cfg.done.mkdir(parents=True, exist_ok=True)
         shutil.move(str(f), cfg.done / f.name)
     _print_summary(summary, args.verbose)
@@ -141,8 +150,15 @@ def cmd_fetch(args) -> None:
             out.mkdir(parents=True, exist_ok=True)
             (out / "latest-fetch.pgn").write_text("\n\n".join(texts))
             for text in texts:
-                import_text(text, reps=reps, progress=progress, player=p.alias,
-                            names={p.username}, skip_bullet=cfg.skip_bullet, summary=summary)
+                import_text(
+                    text,
+                    reps=reps,
+                    progress=progress,
+                    player=p.alias,
+                    names={p.username},
+                    skip_bullet=cfg.skip_bullet,
+                    summary=summary,
+                )
             _print_summary(summary, args.verbose)
             print(f"\nNext: chesstrain report {p.alias}   or   chesstrain guess {p.alias}")
         else:
@@ -157,8 +173,15 @@ def cmd_fetch(args) -> None:
                 print(f"Fetching {months} month(s) of {cfg.lichess_user} from Lichess…")
                 texts.append(lichess_games(cfg.lichess_user, months, cfg.lichess_token))
             for text in texts:
-                import_text(text, reps=reps, progress=progress, player="me",
-                            names=cfg.my_names(), skip_bullet=cfg.skip_bullet, summary=summary)
+                import_text(
+                    text,
+                    reps=reps,
+                    progress=progress,
+                    player="me",
+                    names=cfg.my_names(),
+                    skip_bullet=cfg.skip_bullet,
+                    summary=summary,
+                )
             _print_summary(summary, args.verbose)
     except FetchError as e:
         sys.exit(str(e))
@@ -226,8 +249,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("drill", help="play through lines of one system (or 'all' for a random mix)")
     p.add_argument("system", help="pirc, jobava, caro, colle, or all")
-    p.add_argument("--from", dest="start", type=int, default=0, metavar="N",
-                   help="auto-play your first N moves before asking")
+    p.add_argument(
+        "--from", dest="start", type=int, default=0, metavar="N", help="auto-play your first N moves before asking"
+    )
     p.add_argument("--every", type=int, default=1, metavar="K", help="ask every Kth of your moves")
     p.add_argument("--lines", type=int, default=5, help="lines to play (default 5)")
     p.add_argument("--new", type=int, help="override new positions per day")

@@ -111,7 +111,7 @@ class BoardWindow:
         window = self
 
         class Handler(BaseHTTPRequestHandler):
-            def do_GET(self):  # noqa: N802
+            def do_GET(self):
                 if self.path.startswith("/state"):
                     body, ctype = window._state(), "application/json"
                 elif self.path in ("/", "/index.html"):
@@ -152,7 +152,8 @@ class BoardWindow:
 
 def launch(url: str) -> None:
     if shutil.which("omarchy-launch-webapp"):
-        subprocess.Popen(["omarchy-launch-webapp", url], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                         start_new_session=True)
+        subprocess.Popen(
+            ["omarchy-launch-webapp", url], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True
+        )
     else:
         webbrowser.open(url)

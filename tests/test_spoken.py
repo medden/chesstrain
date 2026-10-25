@@ -11,18 +11,21 @@ def board(*sans, fen=None):
     return b
 
 
-@pytest.mark.parametrize("text,san", [
-    ("Knight to F3.", "Nf3"),
-    ("knight f3", "Nf3"),
-    ("Night to F 3", "Nf3"),
-    ("Knight F-3.", "Nf3"),
-    ("E4.", "e4"),
-    ("e four", "e4"),
-    ("pawn to e4", "e4"),
-    ("D4", "d4"),
-    ("Echo four", "e4"),
-    ("g1 f3", "Nf3"),
-])
+@pytest.mark.parametrize(
+    "text,san",
+    [
+        ("Knight to F3.", "Nf3"),
+        ("knight f3", "Nf3"),
+        ("Night to F 3", "Nf3"),
+        ("Knight F-3.", "Nf3"),
+        ("E4.", "e4"),
+        ("e four", "e4"),
+        ("pawn to e4", "e4"),
+        ("D4", "d4"),
+        ("Echo four", "e4"),
+        ("g1 f3", "Nf3"),
+    ],
+)
 def test_start_position(text, san):
     b = chess.Board()
     assert parse_move(b, text) == b.parse_san(san), text
@@ -73,7 +76,9 @@ def test_garbage():
     assert parse_move(chess.Board(), "queen to h5") is None
 
 
-@pytest.mark.parametrize("text,cmd", [("Hint.", "hint"), ("Skip!", "skip"), ("Quit.", "quit"), ("stop", "quit"), ("e4", None)])
+@pytest.mark.parametrize(
+    "text,cmd", [("Hint.", "hint"), ("Skip!", "skip"), ("Quit.", "quit"), ("stop", "quit"), ("e4", None)]
+)
 def test_commands(text, cmd):
     assert command_of(text) == cmd
 
@@ -81,6 +86,7 @@ def test_commands(text, cmd):
 def test_help_in_quiz_and_castling_side():
     from chesstrain.moves import ScriptedMoveSource, notation_help
     from chesstrain.session import Display, Outcome, quiz
+
     assert "castle right: O-O " in notation_help(chess.WHITE)
     assert "castle left: O-O " in notation_help(chess.BLACK)
     d = Display(colour=False, out=[])

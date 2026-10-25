@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import httpx
 
@@ -38,7 +38,7 @@ def chesscom_games(username: str, months: int, me: str | None = None) -> list[st
 
 def lichess_games(username: str, months: int, token: str | None = None, speeds: str = "blitz,rapid,classical") -> str:
     """One PGN text blob of the user's games since `months` ago."""
-    since = datetime.now(timezone.utc) - timedelta(days=30 * months)
+    since = datetime.now(UTC) - timedelta(days=30 * months)
     headers = {"Accept": "application/x-chess-pgn"}
     if token:
         headers["Authorization"] = f"Bearer {token}"
