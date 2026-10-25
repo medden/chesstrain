@@ -1,0 +1,14 @@
+# Copy to config.local.toml (git-ignored) and fill in.
+
+[me]
+chesscom = "your-chesscom-username"
+lichess = "your-lichess-username"
+
+[lichess]
+token = "lip_..."   # optional: https://lichess.org/account/oauth/token (no scopes needed)
+
+# Creators you watch. Use with `chesstrain fetch --player <alias>`.
+[[players]]
+alias = "someone"
+site = "chesscom"      # or "lichess"
+username = "TheirUsername"

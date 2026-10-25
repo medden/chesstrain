@@ -10,6 +10,7 @@ Caro-Kann (black), Colle-Zukertort (white).
 
 ```sh
 python3 -m venv .venv && .venv/bin/pip install -e '.[dev]'
+cp config.local.example.toml config.local.toml   # then add your usernames
 ln -s "$PWD/.venv/bin/chesstrain" ~/.local/bin/chesstrain   # optional: put it on PATH
 ```
 
@@ -34,7 +35,7 @@ to lock it in; the position comes back soon.
 
 - Drop or paste PGNs into `games/inbox/` and run `chesstrain import` (files move to `games/done/`).
 - Or `chesstrain fetch [--months N]` to pull your chess.com and Lichess games
-  (`[me] chesscom` / `lichess` in `config.toml`).
+  (`[me] chesscom` / `lichess` in `config.local.toml`).
 
 Each game is matched to a system. If **you** left the repertoire, that position goes
 straight into your next review. If the **opponent** played something unprepared, it's
@@ -42,14 +43,13 @@ listed under "gaps" in `chesstrain stats`. Bullet games are skipped.
 
 ## Creators
 
-Watch list in `config.toml` (`[[players]]`): `banzea` (chess.com `Alex_Banzea`),
-`akeem` (Lichess `knightking64`).
+Add creators to the `[[players]]` watch list in `config.local.toml` (alias, site, username).
 
 ```sh
-chesstrain fetch --player banzea   # last 3 months by default
-chesstrain report banzea           # where they play differently from your repertoire
-chesstrain guess banzea            # guess-the-move through one of their games
-chesstrain adopt banzea 3          # copy suggestion [3] into your repertoire (asks first)
+chesstrain fetch --player <alias> # last 3 months by default
+chesstrain report <alias>          # where they play differently from your repertoire
+chesstrain guess <alias>           # guess-the-move through one of their games
+chesstrain adopt <alias> 3         # copy suggestion [3] into your repertoire (asks first)
 ```
 
 ## Editing the repertoire
@@ -67,11 +67,6 @@ The baseline PGNs were generated from `scripts/seeds/*.txt` (one line per row):
 
 The builder won't overwrite a PGN you've edited by hand (or adopted into) unless you
 pass `--force`. `--explorer` needs a free Lichess token (no scopes) from
-https://lichess.org/account/oauth/token, in `LICHESS_TOKEN` or `config.local.toml`:
-
-```toml
-[lichess]
-token = "lip_..."
-```
+https://lichess.org/account/oauth/token, in `LICHESS_TOKEN` or `config.local.toml`.
 
 Progress lives in `data/progress.sqlite` (git-ignored).

@@ -77,10 +77,18 @@ def _read(path: Path) -> dict:
         return tomllib.load(f)
 
 
+def _merge(base: dict, over: dict) -> dict:
+    """config.local.toml overrides config.toml: tables merge, other values replace."""
+    out = dict(base)
+    for k, v in over.items():
+        out[k] = _merge(out[k], v) if isinstance(v, dict) and isinstance(out.get(k), dict) else v
+    return out
+
+
 def load_config(root: Path | None = None) -> Config:
     root = root or project_root()
-    data = _read(root / "config.toml")
     local = _read(root / "config.local.toml")
+    data = _merge(_read(root / "config.toml"), local)
     me = data.get("me", {})
     training = data.get("training", {})
     fetch = data.get("fetch", {})

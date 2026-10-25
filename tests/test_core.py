@@ -166,7 +166,7 @@ def test_review_shows_due_then_stops():
 
 # -- games ------------------------------------------------------------------------
 
-def _game(moves, white="sirogers", black="opp", tc="600+0"):
+def _game(moves, white="me_user", black="opp", tc="600+0"):
     return f'[White "{white}"]\n[Black "{black}"]\n[TimeControl "{tc}"]\n[Result "*"]\n\n{moves} *\n\n'
 
 
@@ -174,8 +174,8 @@ def test_detect_and_deviation_by_me_requeues_card():
     reps = {"pirc": make_rep()}
     p = Progress(":memory:")
     s = ImportSummary()
-    text = _game("1. e4 d6 2. d4 Nf6 3. Nc3 e5", white="opp", black="sirogers")
-    import_text(text, reps=reps, progress=p, player="me", names={"sirogers"}, skip_bullet=True, summary=s)
+    text = _game("1. e4 d6 2. d4 Nf6 3. Nc3 e5", white="opp", black="me_user")
+    import_text(text, reps=reps, progress=p, player="me", names={"me_user"}, skip_bullet=True, summary=s)
     assert s.counts["dev_me"] == 1
     card = p.cards("pirc")[0]
     assert card.lapses == 1
@@ -187,12 +187,12 @@ def test_gap_recorded_when_opponent_leaves_book():
     reps = {"pirc": make_rep()}
     p = Progress(":memory:")
     s = ImportSummary()
-    text = _game("1. e4 d6 2. d4 Nf6 3. Bd3 e5", white="opp", black="sirogers")
-    import_text(text, reps=reps, progress=p, player="me", names={"sirogers"}, skip_bullet=True, summary=s)
+    text = _game("1. e4 d6 2. d4 Nf6 3. Bd3 e5", white="opp", black="me_user")
+    import_text(text, reps=reps, progress=p, player="me", names={"me_user"}, skip_bullet=True, summary=s)
     gaps = p.gaps("pirc")
     assert len(gaps) == 1 and gaps[0]["move_san"] == "Bd3"
     # Re-import is deduplicated.
-    import_text(text, reps=reps, progress=p, player="me", names={"sirogers"}, skip_bullet=True, summary=s)
+    import_text(text, reps=reps, progress=p, player="me", names={"me_user"}, skip_bullet=True, summary=s)
     assert s.counts["duplicate"] == 1 and p.gaps("pirc")[0]["count"] == 1
 
 
@@ -200,8 +200,8 @@ def test_unmatched_and_bullet_skipped():
     reps = {"pirc": make_rep()}
     p = Progress(":memory:")
     s = ImportSummary()
-    text = _game("1. e4 c5 2. Nf3", white="opp", black="sirogers") + _game("1. e4 d6", tc="60+0", white="opp", black="sirogers")
-    import_text(text, reps=reps, progress=p, player="me", names={"sirogers"}, skip_bullet=True, summary=s)
+    text = _game("1. e4 c5 2. Nf3", white="opp", black="me_user") + _game("1. e4 d6", tc="60+0", white="opp", black="me_user")
+    import_text(text, reps=reps, progress=p, player="me", names={"me_user"}, skip_bullet=True, summary=s)
     assert s.counts["unmatched"] == 1 and s.counts["bullet"] == 1
 
 
@@ -228,5 +228,16 @@ def test_shared_prefix_gap_recorded_for_each_system():
     p = Progress(":memory:")
     s = ImportSummary()
     import_text(_game("1. d4 e5 2. dxe5"), reps={"jobava": jobava, "colle": colle}, progress=p, player="me",
-                names={"sirogers"}, skip_bullet=True, summary=s)
+                names={"me_user"}, skip_bullet=True, summary=s)
     assert {g["system"] for g in p.gaps()} == {"jobava", "colle"}
+
+
+def test_local_config_overrides(tmp_path):
+    (tmp_path / "config.toml").write_text('[training]\nnew_per_day = 10\n[display]\nwindow = true\n')
+    (tmp_path / "config.local.toml").write_text(
+        '[me]\nchesscom = "u1"\n[training]\nnew_per_day = 5\n'
+        '[[players]]\nalias = "x"\nsite = "lichess"\nusername = "X"\n'
+    )
+    cfg = load_config(tmp_path)
+    assert cfg.chesscom_user == "u1" and cfg.new_per_day == 5 and cfg.window is True
+    assert [p.username for p in cfg.players] == ["X"]

@@ -1,8 +1,5 @@
-# chesstrain configuration. Secrets (Lichess token) go in config.local.toml, which is git-ignored.
-
-[me]
-chesscom = "sirogers"
-lichess = "londonlad"
+# chesstrain configuration. Personal settings (usernames, Lichess token) go in
+# config.local.toml, which is git-ignored and overrides anything here.
 
 [training]
 new_per_day = 10        # new positions per system per day (drill mode)
@@ -18,13 +15,5 @@ window = true           # show the board in a separate window (vector pieces); -
 my_months = 1           # default months of your own games for `chesstrain fetch`
 player_months = 3       # default months for `chesstrain fetch --player`
 
-# Creators you watch. Use with `chesstrain fetch --player <alias>`.
-[[players]]
-alias = "banzea"
-site = "chesscom"
-username = "Alex_Banzea"   # note: "alexbanzea" (no underscore) is a different account
-
-[[players]]
-alias = "akeem"
-site = "lichess"
-username = "knightking64"  # ChessWithAkeem
+# Your usernames ([me]) and the creators you watch ([[players]]) live in
+# config.local.toml (git-ignored). See config.local.example.toml.
