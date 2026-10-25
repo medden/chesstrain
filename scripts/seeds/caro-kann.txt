@@ -46,3 +46,12 @@
 1.e4 c6 2.Nf3 d5 3.exd5 cxd5 4.d4 Nc6 5.Bb5 Nf6
 1.e4 c6 2.c4 d5 3.exd5 cxd5 4.cxd5 Nf6 5.Nc3 Nxd5 6.Nf3 Nc6 7.Bb5 e6 8.O-O Be7 9.d4 O-O
 1.e4 c6 2.c4 d5 3.exd5 cxd5 4.d4 Nf6
+
+# Coverage gaps (Lichess explorer, club level)
+1.e4 c6 2.Nc3 d5 3.exd5 cxd5 4.d4 Nf6 5.Nf3 Bg4 6.Be2 e6
+1.e4 c6 2.c4 d5 3.cxd5 cxd5 4.exd5
+1.e4 c6 2.d4 d5 3.exd5 cxd5 4.Nf3 Nc6 5.Nc3 Bg4 6.Be2 e6 7.O-O Nf6 8.h3 Bh5
+1.e4 c6 2.d4 d5 3.exd5 cxd5 4.Nf3 Nc6 5.Bd3 Bg4 6.c3 e6 7.O-O Nf6 8.Bg5 Be7
+1.e4 c6 2.Nf3 d5 3.exd5 cxd5 4.Bb5+ Nc6 5.O-O Bg4 6.h3 Bh5 7.d4 e6
+1.e4 c6 2.d3 d5 3.exd5 cxd5 4.Nf3 Nc6 5.Be2 Bg4 6.O-O e6
+1.e4 c6 2.d4 d5 3.e5 Bf5 4.Nf3 e6 5.Nc3 c5 6.Be3 cxd4 7.Nxd4 Bg6 8.Bb5+ Nd7
